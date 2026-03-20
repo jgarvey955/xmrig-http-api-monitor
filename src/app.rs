@@ -288,7 +288,7 @@ impl AppState {
 
     fn setup_view(&self) -> Element<'_, Message> {
         let content = column![
-            text("XMRIGCC-PROXY MONITOR").size(34).color(TEXT_MAIN),
+            text("XMRIG HTTP API MONITOR").size(34).color(TEXT_MAIN),
             text("Initial HTTP API setup").size(16).color(ACCENT),
             text(
                 "The monitor verifies GET /1/summary with the configured Bearer token before opening the dashboard."
@@ -357,7 +357,7 @@ impl AppState {
         let actions = row![
             self.menu_button("Home", Message::SelectView(View::Home), self.view == View::Home),
             self.menu_button(
-                "XMRIGCC-Proxy API",
+                "XMRIG API",
                 Message::SelectView(View::Api),
                 self.view == View::Api,
             ),
@@ -374,7 +374,7 @@ impl AppState {
 
         let bar = row![
             column![
-                text("XMRIGCC-PROXY").size(14).color(ACCENT),
+                text("XMRIG").size(14).color(ACCENT),
                 text("Monitor").size(26).color(TEXT_MAIN),
             ]
             .spacing(2),
@@ -393,7 +393,7 @@ impl AppState {
     fn sidebar(&self) -> Element<'_, Message> {
         let summary = container(
             column![
-                text("XMRIGCC-PROXY").size(15).color(TEXT_MUTED),
+                text("XMRIG").size(15).color(TEXT_MUTED),
                 text("HTTP API Overview").size(24).color(TEXT_MAIN),
                 self.metric_line("Connection", &self.connection_status),
                 self.metric_line("Version", self.display_value(self.summary.version.as_deref())),
@@ -415,7 +415,7 @@ impl AppState {
 
         let nav = column![
             self.nav_button("Home", View::Home),
-            self.nav_button("XMRIGCC-Proxy API", View::Api),
+            self.nav_button("XMRIG API", View::Api),
             self.nav_button("Preferences", View::Preferences),
         ]
         .spacing(8);
@@ -512,7 +512,7 @@ impl AppState {
         let header = container(
             column![
                 row![
-                    text("XMRIGCC-Proxy API").size(28).color(TEXT_MAIN),
+                    text("XMRIG API").size(28).color(TEXT_MAIN),
                     route_picker,
                     button(text("Poll").size(14))
                         .padding([10, 14])

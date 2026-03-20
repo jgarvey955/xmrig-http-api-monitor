@@ -32,5 +32,5 @@ fn app_style(_: &AppState, _: &Theme) -> theme::Style {
 }
 
 fn app_title(_: &AppState) -> String {
-    String::from("XMRIGCC-Proxy Monitor")
+    String::from("XMRIG HTTP API Monitor")
 }
