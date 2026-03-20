@@ -71,7 +71,6 @@ Saved fields:
 The monitor was rewritten against the XMRIG HTTP API reference and source tree:
 
 - [http-api.output](http-api.output)
-- `/home/jonathan/data/source/xmrigcc-proxy`
 
 ## Development Notes
 
