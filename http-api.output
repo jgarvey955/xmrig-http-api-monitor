@@ -1,0 +1,84 @@
+HTTP API options found by scanning the current source tree
+
+Current JSON config keys
+- api.id
+  Custom API instance ID. If unset, the code auto-generates one from the first non-internal IPv4 interface, the HTTP port, and APP_KIND.
+- api.worker-id
+  Custom API worker ID. If unset, it falls back to the hostname.
+- http.enabled
+  Enable the HTTP API server. Default: false.
+- http.host
+  Bind host for the HTTP API. Default: 127.0.0.1.
+- http.port
+  Bind port for the HTTP API. Default: 0. If enabled with port 0, the OS picks an ephemeral port.
+- http.access-token
+  Bearer token used for Authorization: Bearer <token>.
+- http.restricted
+  Restriction mode. Default: true.
+
+Current CLI options implemented in the parser
+- --api-id=ID
+- --api-worker-id=ID
+- --http-enabled
+- --http-host=HOST
+- --http-port=N
+- --http-access-token=T
+- --http-no-restricted
+
+CLI behavior details
+- Any use of --http-enabled, --http-host, --http-port, --http-access-token, or --http-no-restricted forces http.enabled=true during config transform.
+- --http-no-restricted sets http.restricted=false.
+- If http.restricted=false and no token is configured, the API becomes effectively unusable because auth is still required and there is no valid token to match.
+
+Auth and request rules
+- Authorization header format: Bearer <token>
+- If http.restricted=true and no token is set:
+  GET requests are readable without auth.
+  Non-GET requests are rejected with 403 Forbidden.
+- If a token is set:
+  Requests without Authorization get 401 Unauthorized.
+  Requests with the wrong token get 403 Forbidden.
+- Non-GET requests must send Content-Type: application/json.
+- CORS headers returned by API responses:
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, PUT, POST, DELETE
+  Access-Control-Allow-Headers: Authorization, Content-Type
+
+Implemented HTTP API routes
+- OPTIONS <any path>
+  Returns 200 with CORS headers.
+- GET /1/summary
+- GET /2/summary
+- GET /api.json
+  Summary-style API output. Includes id, worker_id, uptime, restricted, resources, features, miner info, hashrate, miners summary, and results.
+- GET /1/workers
+  Returns hashrate and worker list.
+- GET /1/miners
+  Returns miner list plus a format array. The miner rows include id, ip, tx, rx, state, diff, user, password, rig_id, and agent.
+- GET /1/config
+- GET /2/config
+  Only works when http.restricted=false and auth passes. In restricted mode this returns 403.
+- PUT /1/config
+- POST /1/config
+- PUT /2/config
+- POST /2/config
+  Config reload endpoint. Requires unrestricted mode, valid auth, and Content-Type: application/json. Success returns 204 No Content. Bad reload data returns 400.
+- POST /json_rpc
+  JSON-RPC framing exists, but this repo does not implement any RPC methods for it. Unmatched methods return JSON-RPC "Method not found".
+- GET /favicon.ico
+  Returns 404 on non-Windows builds. On Windows it may return an embedded icon.
+
+Methods that are not practically implemented
+- HEAD and DELETE are recognized at the HTTP layer, but there are no route handlers for them here. Depending on mode and headers they end up as 403, 404, or 415.
+
+Legacy/outdated API option names still mentioned in README.md
+- --api-port=N
+- --api-access-token=T
+- --api-no-ipv6
+- --api-no-restricted
+
+Notes on those legacy names
+- They are documentation leftovers in README.md.
+- They are not present in the current getopt table.
+- The working replacements are --http-port, --http-access-token, and --http-no-restricted.
+- There is no current --api-no-ipv6 implementation in this repo.

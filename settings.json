@@ -1,0 +1,8 @@
+{
+  "api_host": "192.168.0.221",
+  "api_port": 50112,
+  "api_transport": "http",
+  "api_access_token": "zxcvbnmlkjhgfdsaqwertyuiop",
+  "poll_frequency_seconds": 10,
+  "preferred_endpoint": "/1/summary"
+}
