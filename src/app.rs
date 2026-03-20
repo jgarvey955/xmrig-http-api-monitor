@@ -101,6 +101,7 @@ pub struct AppState {
     screen: Screen,
     view: View,
     api_endpoints: Vec<ApiEndpointSpec>,
+    active_settings: Settings,
     connection_status: String,
     last_poll: String,
     summary: SummarySnapshot,
@@ -129,13 +130,7 @@ impl AppState {
         })];
 
         if self.screen == Screen::Dashboard {
-            let seconds = self
-                .poll_frequency_input
-                .trim()
-                .parse::<u64>()
-                .ok()
-                .filter(|value| *value > 0)
-                .unwrap_or(10);
+            let seconds = self.active_settings.poll_frequency_seconds;
 
             subscriptions.push(
                 iced::time::every(Duration::from_secs(seconds)).map(|_| Message::StatusTick),
@@ -173,6 +168,7 @@ impl AppState {
             },
             view: View::Home,
             api_endpoints,
+            active_settings: settings.clone(),
             connection_status: "Disconnected".into(),
             last_poll: "Never".into(),
             summary: SummarySnapshot::default(),
@@ -423,7 +419,7 @@ impl AppState {
         let footer = container(
             column![
                 text("Base URL").size(13).color(TEXT_MUTED),
-                text(self.settings_snapshot().api_url_display())
+                text(self.active_settings.api_url_display())
                     .size(14)
                     .color(TEXT_MAIN),
                 text("Health Route").size(13).color(TEXT_MUTED),
@@ -452,7 +448,7 @@ impl AppState {
     }
 
     fn home_view(&self) -> Element<'_, Message> {
-        let settings = self.settings_snapshot();
+        let settings = &self.active_settings;
 
         let metrics = row![
             self.info_card("Proxy Version", self.display_value(self.summary.version.as_deref())),
@@ -983,12 +979,9 @@ impl AppState {
         self.error = None;
         self.notice = None;
 
-        match self.settings_from_inputs() {
-            Ok(settings) => match Self::poll_with_settings(&settings, None) {
-                Ok(outcome) => self.apply_poll(outcome),
-                Err(error) => self.apply_disconnect(error, false),
-            },
-            Err(error) => self.error = Some(error),
+        match Self::poll_with_settings(&self.active_settings, None) {
+            Ok(outcome) => self.apply_poll(outcome),
+            Err(error) => self.apply_disconnect(error, false),
         }
     }
 
@@ -998,15 +991,9 @@ impl AppState {
 
         let selected_endpoint = self.selected_endpoint.clone();
 
-        match self.settings_from_inputs() {
-            Ok(settings) => match Self::poll_with_settings(&settings, Some(&selected_endpoint)) {
-                Ok(outcome) => self.apply_poll(outcome),
-                Err(error) => self.apply_disconnect(error, true),
-            },
-            Err(error) => {
-                self.error = Some(error.clone());
-                self.selected_output = Some(json!({ "error": error }));
-            }
+        match Self::poll_with_settings(&self.active_settings, Some(&selected_endpoint)) {
+            Ok(outcome) => self.apply_poll(outcome),
+            Err(error) => self.apply_disconnect(error, true),
         }
     }
 
@@ -1021,6 +1008,7 @@ impl AppState {
             .save()
             .map_err(|error| format!("Failed to save settings.json: {error}"))?;
 
+        self.active_settings = settings;
         self.notice = Some("HTTP API connection verified and settings saved.".into());
         self.apply_poll(outcome);
 
@@ -1030,8 +1018,7 @@ impl AppState {
     fn connect_with_current_inputs(&mut self) -> Result<(), String> {
         self.error = None;
 
-        let settings = self.settings_from_inputs()?;
-        let outcome = Self::poll_with_settings(&settings, None)?;
+        let outcome = Self::poll_with_settings(&self.active_settings, None)?;
         self.apply_poll(outcome);
 
         Ok(())
@@ -1071,11 +1058,6 @@ impl AppState {
             poll_frequency_seconds,
             preferred_endpoint,
         })
-    }
-
-    fn settings_snapshot(&self) -> Settings {
-        self.settings_from_inputs()
-            .unwrap_or_else(|_| Settings::default())
     }
 
     fn safe_endpoint_paths(&self) -> Vec<String> {
